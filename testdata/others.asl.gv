@@ -1,0 +1,41 @@
+digraph others {
+	nodesep=0.8;
+	ranksep=0.5;
+	"start"->"Validate"[ arrowhead="vee" ];
+	"Validate"->"Wait"[ arrowhead="vee" ];
+	"Wait"->"Pass"[ arrowhead="vee" ];
+	"Pass"->"Success"[ arrowhead="vee" ];
+	"Success"->"end"[ arrowhead="vee", ltail="cluster_Validate-All" ];
+	subgraph "cluster_Validate-All_1" {
+	fillcolor="#00000080";
+	labeljust="l";
+	shape="box";
+	style="dashed";
+	subgraph "cluster_Validate-All_2" {
+	fillcolor="#00000080";
+	labeljust="l";
+	shape="box";
+	style="dashed";
+	subgraph "cluster_Validate-All_3" {
+	fillcolor="#00000080";
+	label="Validate-All";
+	labeljust="l";
+	shape="box";
+	style="dashed";
+	"Pass" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"Success" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"Validate" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"Wait" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+
+}
+;
+
+}
+;
+
+}
+;
+	"end" [ shape="circle", style="filled" ];
+	"start" [ shape="circle", style="filled" ];
+
+}

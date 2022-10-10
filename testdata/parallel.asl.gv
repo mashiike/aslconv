@@ -1,0 +1,22 @@
+digraph parallel {
+	nodesep=0.8;
+	ranksep=0.5;
+	"start"->"LookupAddress"[ arrowhead="vee" ];
+	"start"->"LookupPhone"[ arrowhead="vee" ];
+	"LookupAddress"->"end"[ arrowhead="vee", ltail="cluster_LookupCustomerInfo" ];
+	"LookupPhone"->"end"[ arrowhead="vee", ltail="cluster_LookupCustomerInfo" ];
+	subgraph "cluster_LookupCustomerInfo" {
+	fillcolor="#00000080";
+	label="LookupCustomerInfo";
+	labeljust="l";
+	shape="box";
+	style="rounded,dashed";
+	"LookupAddress" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"LookupPhone" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+
+}
+;
+	"end" [ shape="circle", style="filled" ];
+	"start" [ shape="circle", style="filled" ];
+
+}

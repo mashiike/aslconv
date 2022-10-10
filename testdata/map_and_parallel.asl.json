@@ -1,0 +1,66 @@
+{
+    "Comment": "A description of my state machine",
+    "StartAt": "Map",
+    "States": {
+      "Map": {
+        "Type": "Map",
+        "End": true,
+        "Iterator": {
+          "StartAt": "Parallel",
+          "States": {
+            "Parallel": {
+              "Type": "Parallel",
+              "End": true,
+              "Branches": [
+                {
+                  "StartAt": "Choice",
+                  "States": {
+                    "Choice": {
+                      "Type": "Choice",
+                      "Choices": [
+                        {
+                          "Not": {
+                            "Variable": "$.hoge",
+                            "IsPresent": true
+                          },
+                          "Next": "Wait"
+                        }
+                      ],
+                      "Default": "Pass"
+                    },
+                    "Wait": {
+                      "Type": "Wait",
+                      "Seconds": 5,
+                      "End": true
+                    },
+                    "Pass": {
+                      "Type": "Pass",
+                      "End": true
+                    }
+                  }
+                },
+                {
+                  "StartAt": "Map (1)",
+                  "States": {
+                    "Map (1)": {
+                      "Type": "Map",
+                      "End": true,
+                      "Iterator": {
+                        "StartAt": "Pass (1)",
+                        "States": {
+                          "Pass (1)": {
+                            "Type": "Pass",
+                            "End": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
