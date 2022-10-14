@@ -36,7 +36,7 @@
             "Catch": [
               {
                 "ErrorEquals": [ "States.ALL" ],
-                "Next": "Z"
+                "Next": "Wait"
               }
             ]
           },

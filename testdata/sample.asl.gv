@@ -1,0 +1,23 @@
+digraph "sample" {
+	compound=true;
+	nodesep=0.8;
+	ranksep=0.8;
+	"ChoiceState"->"DefaultState"[ arrowhead="vee", label="default" ];
+	"ChoiceState"->"FirstMatchState"[ arrowhead=vee, label="Rule #1" ];
+	"ChoiceState"->"SecondMatchState"[ arrowhead=vee, label="Rule #2" ];
+	"DefaultState"->"end"[ arrowhead="vee" ];
+	"FirstMatchState"->"NextState"[ arrowhead="vee" ];
+	"FirstState"->"ChoiceState"[ arrowhead="vee" ];
+	"NextState"->"end"[ arrowhead="vee" ];
+	"SecondMatchState"->"NextState"[ arrowhead="vee" ];
+	"start"->"FirstState"[ arrowhead="vee" ];
+	"ChoiceState" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"DefaultState" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"FirstMatchState" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"FirstState" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"NextState" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"SecondMatchState" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"end" [ shape="circle", style="filled" ];
+	"start" [ shape="circle", style="filled" ];
+
+}

@@ -16,7 +16,7 @@ state "map" "Validate-All" {
       next            = state.wait.Wait
       output_path     = "$.items"
       retry           = ["{\"ErrorEquals\":[\"ErrorA\",\"ErrorB\"],\"IntervalSeconds\":1,\"BackoffRate\":2,\"MaxAttempts\":2}", "{\"ErrorEquals\":[\"ErrorC\"],\"IntervalSeconds\":5}"]
-      catch           = ["{\"ErrorEquals\":[\"States.ALL\"],\"Next\":\"Z\"}"]
+      catch           = ["{\"ErrorEquals\":[\"States.ALL\"],\"Next\":\"Wait\"}"]
       parameters      = "{\"input.$\":\"$\"}"
       result_selector = "{\"data.$\":\"$\"}"
     }

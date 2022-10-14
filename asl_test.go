@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/mashiike/aslconv"
+	"github.com/sebdah/goldie/v2"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/require"
 	"github.com/zclconf/go-cty/cty/function"
@@ -165,7 +166,7 @@ var othersASL = &aslconv.AmazonStatesLanguage{
 						Catch: []aslconv.RawMessage{
 							aslconv.RawMessage(`{
 								"ErrorEquals": [ "States.ALL" ],
-								"Next": "Z"
+								"Next": "Wait"
 							}`),
 						},
 						Next: ptr("Wait"),
@@ -365,4 +366,44 @@ func TestEncodeBody(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMarshalDOT(t *testing.T) {
+	cases := []struct {
+		casename string
+		source   *aslconv.AmazonStatesLanguage
+	}{
+		{
+			casename: "sample",
+			source:   sampleASL,
+		},
+		{
+			casename: "parallel",
+			source:   parallelASL,
+		},
+		{
+			casename: "others",
+			source:   othersASL,
+		},
+		{
+			casename: "map_and_parallel",
+			source:   loadASL(t, "testdata/map_and_parallel.asl.json"),
+		},
+	}
+
+	g := goldie.New(t, goldie.WithNameSuffix(".asl.gv"))
+	for _, c := range cases {
+		t.Run(c.casename, func(t *testing.T) {
+			actual, err := c.source.MarshalDOT(c.casename)
+			require.NoError(t, err)
+			g.Assert(t, c.casename, []byte(actual))
+		})
+	}
+}
+
+func loadASL(t *testing.T, path string) *aslconv.AmazonStatesLanguage {
+	t.Helper()
+	asl, err := aslconv.LoadASLWithPath(path)
+	require.NoError(t, err)
+	return asl
 }

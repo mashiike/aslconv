@@ -1,0 +1,27 @@
+digraph "parallel" {
+	compound=true;
+	nodesep=0.8;
+	ranksep=0.8;
+	"LookupAddress"->"cluster_LookupCustomerInfo_end"[ arrowhead="vee", ltail="cluster_LookupCustomerInfo" ];
+	"LookupCustomerInfo"->"LookupAddress"[ arrowhead="vee" ];
+	"LookupCustomerInfo"->"LookupPhone"[ arrowhead="vee" ];
+	"LookupPhone"->"cluster_LookupCustomerInfo_end"[ arrowhead="vee", ltail="cluster_LookupCustomerInfo" ];
+	"cluster_LookupCustomerInfo_end"->"end"[ arrowhead="vee", ltail="cluster_LookupCustomerInfo" ];
+	"start"->"LookupCustomerInfo"[ arrowhead="vee", lhead="cluster_LookupCustomerInfo" ];
+	subgraph "cluster_LookupCustomerInfo" {
+	fillcolor="#00000080";
+	label="LookupCustomerInfo";
+	labeljust="l";
+	shape="box";
+	style="rounded,dashed";
+	"LookupAddress" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"LookupCustomerInfo" [ label="", shape="circle", style="filled" ];
+	"LookupPhone" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"cluster_LookupCustomerInfo_end" [ label="", shape="circle", style="filled" ];
+
+}
+;
+	"end" [ shape="circle", style="filled" ];
+	"start" [ shape="circle", style="filled" ];
+
+}
