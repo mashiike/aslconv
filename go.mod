@@ -3,7 +3,7 @@ module github.com/mashiike/aslconv
 go 1.19
 
 require (
-	github.com/agext/levenshtein v1.2.1
+	github.com/agext/levenshtein v1.2.3
 	github.com/awalterschulze/gographviz v2.0.3+incompatible
 	github.com/google/go-cmp v0.5.9
 	github.com/hashicorp/hcl/v2 v2.14.0
