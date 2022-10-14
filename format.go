@@ -22,6 +22,7 @@ type Format int
 const (
 	FormatJSON Format = iota
 	FormatHCL
+	FormatDOT
 	formatInvalid
 )
 
@@ -39,6 +40,8 @@ func GetFormat(name string) (Format, bool) {
 		return FormatJSON, true
 	case "hcl":
 		return FormatHCL, true
+	case "dot", "graphviz":
+		return FormatDOT, true
 	}
 	return formatInvalid, false
 }
@@ -49,6 +52,8 @@ func (f Format) String() string {
 		return "JSON"
 	case FormatHCL:
 		return "HCL (HashiCorp configuration language)"
+	case FormatDOT:
+		return "DOT (text/vnd.graphviz, output only)"
 	}
 	return ""
 }
@@ -59,6 +64,8 @@ func (f Format) Exts() []string {
 		return []string{"*.json"}
 	case FormatHCL:
 		return []string{"*.hcl", "*.hcl.json"}
+	case FormatDOT:
+		return []string{"*.gv", "*.dot"}
 	}
 	return []string{}
 }
@@ -211,6 +218,8 @@ func (f Format) loadASLWithBytes(data []byte, path string, opts *LoadOptions) (*
 			return nil, convertDiagnosticsToError(diags, parser, opts)
 		}
 		return asl, convertDiagnosticsToError(diags, parser, opts)
+	case FormatDOT:
+		return nil, errors.New("DOT format is not support load file. this format support write only")
 	}
 	return nil, errors.New("unknown format")
 }
@@ -253,6 +262,13 @@ func (f Format) WriteASL(writer io.Writer, asl *AmazonStatesLanguage) error {
 			return err
 		}
 		return nil
+	case FormatDOT:
+		dot, err := asl.MarshalDOT("G")
+		if err != nil {
+			return err
+		}
+		_, err = io.WriteString(writer, dot)
+		return err
 	}
 	return errors.New("unknown format")
 }
@@ -284,6 +300,8 @@ func DetectFormat(path string) (Format, error) {
 		default:
 			return FormatJSON, nil
 		}
+	case ".gv", ".dot":
+		return FormatDOT, nil
 	}
 	return formatInvalid, errors.New("can not detect format")
 }
