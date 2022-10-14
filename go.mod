@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.14.0
 	github.com/samber/lo v1.31.0
 	github.com/sebdah/goldie/v2 v2.5.3
-	github.com/sergi/go-diff v1.0.0
+	github.com/sergi/go-diff v1.2.0
 	github.com/stretchr/testify v1.8.0
 	github.com/zclconf/go-cty v1.8.0
 )
