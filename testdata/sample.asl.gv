@@ -1,15 +1,16 @@
-digraph sample {
+digraph "sample" {
+	compound=true;
 	nodesep=0.8;
-	ranksep=0.5;
-	"start"->"FirstState"[ arrowhead="vee" ];
-	"FirstState"->"ChoiceState"[ arrowhead="vee" ];
+	ranksep=0.8;
 	"ChoiceState"->"DefaultState"[ arrowhead="vee", label="default" ];
 	"ChoiceState"->"FirstMatchState"[ arrowhead=vee, label="Rule #1" ];
 	"ChoiceState"->"SecondMatchState"[ arrowhead=vee, label="Rule #2" ];
-	"FirstMatchState"->"NextState"[ arrowhead="vee" ];
-	"SecondMatchState"->"NextState"[ arrowhead="vee" ];
 	"DefaultState"->"end"[ arrowhead="vee" ];
+	"FirstMatchState"->"NextState"[ arrowhead="vee" ];
+	"FirstState"->"ChoiceState"[ arrowhead="vee" ];
 	"NextState"->"end"[ arrowhead="vee" ];
+	"SecondMatchState"->"NextState"[ arrowhead="vee" ];
+	"start"->"FirstState"[ arrowhead="vee" ];
 	"ChoiceState" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
 	"DefaultState" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
 	"FirstMatchState" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];

@@ -22,7 +22,7 @@ type MarshalDOTOptions struct {
 func (top *AmazonStatesLanguage) MarshalDOT(graphName string, optFns ...func(*MarshalDOTOptions)) (string, error) {
 	opts := &MarshalDOTOptions{
 		PrepareGraph: func(g *gographviz.Graph) error {
-			g.AddAttr(g.Name, "ranksep", "0.5")
+			g.AddAttr(g.Name, "ranksep", "0.8")
 			g.AddAttr(g.Name, "nodesep", "0.8")
 			return nil
 		},
@@ -69,7 +69,7 @@ func (top *AmazonStatesLanguage) MarshalDOT(graphName string, optFns ...func(*Ma
 				"shape":     `"box"`,
 				"style":     `"dashed"`,
 				"fillcolor": `"#00000080"`,
-				"label":     fmt.Sprintf(`"%s"`, s.Name),
+				"label":     fmt.Sprintf(`"%s(iterator)"`, s.Name),
 				"labeljust": `"l"`,
 			}
 		},
@@ -78,106 +78,147 @@ func (top *AmazonStatesLanguage) MarshalDOT(graphName string, optFns ...func(*Ma
 		optFn(opts)
 	}
 	g := gographviz.NewGraph()
-	g.AddAttr(graphName, "compound", "true")
 	if err := g.SetDir(true); err != nil {
 		return "", err
 	}
-	if err := g.SetName(graphName); err != nil {
+	if err := g.SetName(quoteForNode(graphName)); err != nil {
 		return "", err
 	}
 	if err := opts.PrepareGraph(g); err != nil {
 		return "", err
 	}
-
-	terminalNodeAttrs := opts.TerminalNodeAttrs()
-	if err := g.AddNode(graphName, `"start"`, terminalNodeAttrs); err != nil {
+	if err := g.AddAttr(quoteForNode(graphName), "compound", "true"); err != nil {
 		return "", err
 	}
-	if err := g.AddNode(graphName, `"end"`, terminalNodeAttrs); err != nil {
+	if err := top.marshalDOT(g, graphName, "start", "end", opts); err != nil {
 		return "", err
 	}
-	startNodes, err := top.writeGraphNodes(g, graphName, opts)
-	if err != nil {
-		return "", err
-	}
-	edgeAttrs := opts.EdgeAttrs("")
-	for _, next := range startNodes[top.StartAt] {
-		if err := g.AddEdge(`"start"`, `"`+next+`"`, true, edgeAttrs); err != nil {
-			return "", err
-		}
-	}
-	if err := top.writeGraphEdges(g, graphName, []string{"end"}, startNodes, opts); err != nil {
-		return "", err
-	}
+	g.Edges.Edges = g.Edges.Sorted()
 	return g.String(), nil
 }
-
-func (top *AmazonStatesLanguage) writeGraphNodes(g *gographviz.Graph, graphName string, opts *MarshalDOTOptions) (map[string][]string, error) {
-	if len(top.States) == 0 {
-		return nil, errors.New("states not found")
-	}
-	startNodes := make(map[string][]string)
-	for _, state := range top.States {
-		stateStartNodes, err := state.writeGraphNodes(g, graphName, opts)
-		if err != nil {
-			return nil, err
-		}
-		for key, value := range stateStartNodes {
-			startNodes[key] = append(startNodes[key], value...)
-		}
-	}
-	return startNodes, nil
+func quoteForNode(str string) string {
+	return `"` + str + `"`
 }
 
-func (state *State) writeGraphNodes(g *gographviz.Graph, graphName string, opts *MarshalDOTOptions) (map[string][]string, error) {
+func (top *AmazonStatesLanguage) marshalDOT(g *gographviz.Graph, graphName string, startName string, endName string, opts *MarshalDOTOptions) error {
+	if len(top.States) == 0 {
+		return errors.New("states not found")
+	}
+	terminalNodeAttrs := opts.TerminalNodeAttrs()
+	if strings.HasPrefix(graphName, `cluster_`) {
+		terminalNodeAttrs["label"] = `""`
+	}
+	if err := g.AddNode(quoteForNode(graphName), quoteForNode(startName), terminalNodeAttrs); err != nil {
+		return err
+	}
+	if err := g.AddNode(quoteForNode(graphName), quoteForNode(endName), terminalNodeAttrs); err != nil {
+		return err
+	}
+
+	for _, state := range top.States {
+		err := state.marshalDOT(g, graphName, startName, endName, opts)
+		if err != nil {
+			return err
+		}
+	}
+	_, exists := g.Edges.SrcToDsts[quoteForNode(startName)]
+	if exists {
+		_, exists = g.Edges.SrcToDsts[quoteForNode(startName)][quoteForNode(top.StartAt)]
+	}
+	if !exists {
+		edgeAttrs := opts.EdgeAttrs("")
+		if err := g.AddEdge(quoteForNode(startName), quoteForNode(top.StartAt), true, edgeAttrs); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (state *State) marshalDOT(g *gographviz.Graph, graphName string, startName string, endName string, opts *MarshalDOTOptions) error {
 	if len(state.Branches) > 0 {
-		startNodes := make(map[string][]string)
 		subGraphAttrs := opts.BranchesSubGraphAttrs(state)
-		if err := g.AddSubGraph(graphName, `"cluster_`+state.Name+`"`, subGraphAttrs); err != nil {
-			return nil, err
+		subGraphName := "cluster_" + state.Name
+		if err := g.AddSubGraph(quoteForNode(graphName), quoteForNode(subGraphName), subGraphAttrs); err != nil {
+			return err
 		}
 		for _, branch := range state.Branches {
-			branchStartNodes, err := branch.writeGraphNodes(g, `"cluster_`+state.Name+`"`, opts)
+			err := branch.marshalDOT(g, subGraphName, state.Name, subGraphName+"_end", opts)
 			if err != nil {
-				return nil, err
+				return err
 			}
-			for key, value := range branchStartNodes {
-				startNodes[key] = append(startNodes[key], value...)
-			}
-			startNodes[state.Name] = append(startNodes[state.Name], startNodes[branch.StartAt]...)
 		}
-		return startNodes, nil
+
+		edgeAttrs := opts.EdgeAttrs("")
+		edgeAttrs["lhead"] = quoteForNode(subGraphName)
+		if err := g.AddEdge(quoteForNode(startName), quoteForNode(state.Name), true, edgeAttrs); err != nil {
+			return err
+		}
+		delete(edgeAttrs, "lhead")
+		edgeAttrs["ltail"] = quoteForNode(subGraphName)
+		if err := g.AddEdge(`"`+subGraphName+`_end"`, quoteForNode(endName), true, edgeAttrs); err != nil {
+			return err
+		}
+		return nil
 	}
 	if state.Iterator != nil {
 		subGraphAttrs := opts.IteratorSubGraphAttrs(state)
-		label, ok := subGraphAttrs["label"]
-		if ok {
-			delete(subGraphAttrs, "label")
+		subGraphName := "cluster_" + state.Name
+		if err := g.AddSubGraph(quoteForNode(graphName), quoteForNode(subGraphName), subGraphAttrs); err != nil {
+			return err
 		}
-		if err := g.AddSubGraph(graphName, `"cluster_`+state.Name+`_1"`, subGraphAttrs); err != nil {
-			return nil, err
-		}
-		if err := g.AddSubGraph(`"cluster_`+state.Name+`_1"`, `"cluster_`+state.Name+`_2"`, subGraphAttrs); err != nil {
-			return nil, err
-		}
-		if ok {
-			subGraphAttrs["label"] = label
-		}
-		if err := g.AddSubGraph(`"cluster_`+state.Name+`_2"`, `"cluster_`+state.Name+`_3"`, subGraphAttrs); err != nil {
-			return nil, err
-		}
-		startNodes, err := state.Iterator.writeGraphNodes(g, `"cluster_`+state.Name+`_3"`, opts)
+		err := state.Iterator.marshalDOT(g, subGraphName, state.Name, subGraphName+"_end", opts)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		startNodes[state.Name] = append(startNodes[state.Name], startNodes[state.Iterator.StartAt]...)
-		return startNodes, nil
+		edgeAttrs := opts.EdgeAttrs("")
+		edgeAttrs["lhead"] = quoteForNode(subGraphName)
+		if err := g.AddEdge(quoteForNode(startName), quoteForNode(state.Name), true, edgeAttrs); err != nil {
+			return err
+		}
+		delete(edgeAttrs, "lhead")
+		edgeAttrs["ltail"] = quoteForNode(subGraphName)
+		if err := g.AddEdge(`"`+subGraphName+`_end"`, quoteForNode(endName), true, edgeAttrs); err != nil {
+			return err
+		}
+		return nil
 	}
 	nodeAttrs := opts.StateNodeAttrs(state)
-	if err := g.AddNode(graphName, `"`+state.Name+`"`, nodeAttrs); err != nil {
-		return nil, err
+	if err := g.AddNode(quoteForNode(graphName), quoteForNode(state.Name), nodeAttrs); err != nil {
+		return err
 	}
-	return map[string][]string{state.Name: {state.Name}}, nil
+	nextStates := make(map[string]map[string]string)
+	if state.Next != nil && *state.Next != "" {
+		nextStates[*state.Next] = opts.EdgeAttrs("")
+	}
+	if state.Default != nil && *state.Default != "" {
+		nextStates[*state.Default] = opts.EdgeAttrs("default")
+	}
+	for i, rawMessage := range state.Choices {
+		var choice map[string]interface{}
+		if err := json.Unmarshal([]byte(rawMessage), &choice); err != nil {
+			return err
+		}
+		if next, ok := choice["Next"].(string); ok {
+			nextStates[next] = opts.ChoiceEdgeAttrs(choice, i)
+
+		}
+	}
+	for next, edgeAttrs := range nextStates {
+		if err := g.AddEdge(quoteForNode(state.Name), quoteForNode(next), true, edgeAttrs); err != nil {
+			return err
+		}
+	}
+	if len(nextStates) == 0 || (state.End != nil && *state.End) {
+		edgeAttrs := opts.EdgeAttrs("")
+		if strings.HasPrefix(graphName, "cluster_") {
+			edgeAttrs["ltail"] = quoteForNode(graphName)
+		}
+		if err := g.AddEdge(quoteForNode(state.Name), quoteForNode(endName), true, edgeAttrs); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (top *AmazonStatesLanguage) writeGraphEdges(g *gographviz.Graph, graphName string, endNames []string, startNodes map[string][]string, opts *MarshalDOTOptions) error {
@@ -196,6 +237,9 @@ func (state *State) writeGraphEdges(g *gographviz.Graph, graphName string, endNa
 	if len(state.Branches) > 0 {
 		for _, branch := range state.Branches {
 			branchNext := endNames
+			/*if strings.HasPrefix(graphName, "cluster_") {
+				branchNext = []string{}
+			}*/
 			if state.Next != nil && *state.Next != "" {
 				branchNext = startNodes[*state.Next]
 			}
@@ -233,17 +277,17 @@ func (state *State) writeGraphEdges(g *gographviz.Graph, graphName string, endNa
 		}
 	}
 	for next, edgeAttrs := range nextStates {
-		if err := g.AddEdge(`"`+state.Name+`"`, `"`+next+`"`, true, edgeAttrs); err != nil {
+		if err := g.AddEdge(quoteForNode(state.Name), `"`+next+`"`, true, edgeAttrs); err != nil {
 			return err
 		}
 	}
 	if len(nextStates) == 0 || (state.End != nil && *state.End) {
 		edgeAttrs := opts.EdgeAttrs("")
 		if strings.HasPrefix(graphName, "cluster_") {
-			edgeAttrs["ltail"] = `"` + graphName + `"`
+			edgeAttrs["ltail"] = quoteForNode(graphName)
 		}
 		for _, endName := range endNames {
-			if err := g.AddEdge(`"`+state.Name+`"`, `"`+endName+`"`, true, edgeAttrs); err != nil {
+			if err := g.AddEdge(quoteForNode(state.Name), quoteForNode(endName), true, edgeAttrs); err != nil {
 				return err
 			}
 		}

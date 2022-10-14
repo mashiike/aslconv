@@ -1,29 +1,28 @@
-digraph map_and_parallel {
+digraph "map_and_parallel" {
+	compound=true;
 	nodesep=0.8;
-	ranksep=0.5;
-	"start"->"Choice"[ arrowhead="vee" ];
-	"start"->"Pass (1)"[ arrowhead="vee" ];
-	"Wait"->"end"[ arrowhead="vee", ltail="cluster_Parallel" ];
-	"Pass"->"end"[ arrowhead="vee", ltail="cluster_Parallel" ];
+	ranksep=0.8;
 	"Choice"->"Pass"[ arrowhead="vee", label="default" ];
 	"Choice"->"Wait"[ arrowhead=vee, label="Rule #1" ];
-	"Pass (1)"->"end"[ arrowhead="vee", ltail="cluster_Map (1)" ];
-	subgraph "cluster_Map_1" {
+	"Map (1)"->"Pass (1)"[ arrowhead="vee" ];
+	"Map"->"Parallel"[ arrowhead="vee", lhead="cluster_Parallel" ];
+	"Parallel"->"Choice"[ arrowhead="vee" ];
+	"Parallel"->"Map (1)"[ arrowhead="vee", lhead="cluster_Map (1)" ];
+	"Pass (1)"->"cluster_Map (1)_end"[ arrowhead="vee", ltail="cluster_Map (1)" ];
+	"Pass"->"cluster_Parallel_end"[ arrowhead="vee", ltail="cluster_Parallel" ];
+	"Wait"->"cluster_Parallel_end"[ arrowhead="vee", ltail="cluster_Parallel" ];
+	"cluster_Map (1)_end"->"cluster_Parallel_end"[ arrowhead="vee", ltail="cluster_Map (1)" ];
+	"cluster_Map_end"->"end"[ arrowhead="vee", ltail="cluster_Map" ];
+	"cluster_Parallel_end"->"cluster_Map_end"[ arrowhead="vee", ltail="cluster_Parallel" ];
+	"start"->"Map"[ arrowhead="vee", lhead="cluster_Map" ];
+	subgraph "cluster_Map" {
 	fillcolor="#00000080";
+	label="Map(iterator)";
 	labeljust="l";
 	shape="box";
 	style="dashed";
-	subgraph "cluster_Map_2" {
-	fillcolor="#00000080";
-	labeljust="l";
-	shape="box";
-	style="dashed";
-	subgraph "cluster_Map_3" {
-	fillcolor="#00000080";
-	label="Map";
-	labeljust="l";
-	shape="box";
-	style="dashed";
+	"Map" [ label="", shape="circle", style="filled" ];
+	"cluster_Map_end" [ label="", shape="circle", style="filled" ];
 	subgraph "cluster_Parallel" {
 	fillcolor="#00000080";
 	label="Parallel";
@@ -31,40 +30,22 @@ digraph map_and_parallel {
 	shape="box";
 	style="rounded,dashed";
 	"Choice" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"Parallel" [ label="", shape="circle", style="filled" ];
 	"Pass" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
 	"Wait" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
-	subgraph "cluster_Map (1)_1" {
+	subgraph "cluster_Map (1)" {
 	fillcolor="#00000080";
+	label="Map (1)(iterator)";
 	labeljust="l";
 	shape="box";
 	style="dashed";
-	subgraph "cluster_Map (1)_2" {
-	fillcolor="#00000080";
-	labeljust="l";
-	shape="box";
-	style="dashed";
-	subgraph "cluster_Map (1)_3" {
-	fillcolor="#00000080";
-	label="Map (1)";
-	labeljust="l";
-	shape="box";
-	style="dashed";
+	"Map (1)" [ label="", shape="circle", style="filled" ];
 	"Pass (1)" [ fillcolor="#00000080", shape="box", style="rounded,dashed" ];
+	"cluster_Map (1)_end" [ label="", shape="circle", style="filled" ];
 
 }
 ;
-
-}
-;
-
-}
-;
-
-}
-;
-
-}
-;
+	"cluster_Parallel_end" [ label="", shape="circle", style="filled" ];
 
 }
 ;
